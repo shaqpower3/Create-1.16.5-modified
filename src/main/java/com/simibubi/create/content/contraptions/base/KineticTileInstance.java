@@ -85,9 +85,9 @@ public abstract class KineticTileInstance<T extends KineticTileEntity> extends T
     }
 
     protected InstanceMaterial<RotatingData> getRotatingMaterial() {
-        return materialManager.defaultSolid()
-                .material(AllMaterialSpecs.ROTATING);
-    }
+		return materialManager.defaultSolid()
+				.material(AllMaterialSpecs.ROTATING);
+	}
 
     public static BlockState shaft(Direction.Axis axis) {
         return AllBlocks.SHAFT.getDefaultState()

@@ -18,114 +18,114 @@ import net.minecraftforge.common.ToolType;
 
 public abstract class KineticBlock extends Block implements IRotate {
 
-    protected static final Palette color = Palette.Red;
+	protected static final Palette color = Palette.Red;
 
-    public KineticBlock(Properties properties) {
-        super(properties);
-    }
+	public KineticBlock(Properties properties) {
+		super(properties);
+	}
 
-    @Override
-    public ToolType getHarvestTool(BlockState state) {
-        return null;
-    }
+	@Override
+	public ToolType getHarvestTool(BlockState state) {
+		return null;
+	}
 
-    @Override
-    public boolean canHarvestBlock(BlockState state, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        for (ToolType toolType : player.getMainHandItem()
-                .getToolTypes()) {
-            if (isToolEffective(state, toolType))
-                return true;
-        }
-        return super.canHarvestBlock(state, world, pos, player);
-    }
+	@Override
+	public boolean canHarvestBlock(BlockState state, IBlockReader world, BlockPos pos, PlayerEntity player) {
+		for (ToolType toolType : player.getMainHandItem()
+			.getToolTypes()) {
+			if (isToolEffective(state, toolType))
+				return true;
+		}
+		return super.canHarvestBlock(state, world, pos, player);
+	}
 
-    @Override
-    public boolean isToolEffective(BlockState state, ToolType tool) {
-        return tool == ToolType.AXE || tool == ToolType.PICKAXE;
-    }
+	@Override
+	public boolean isToolEffective(BlockState state, ToolType tool) {
+		return tool == ToolType.AXE || tool == ToolType.PICKAXE;
+	}
 
-    @Override
-    public void onPlace(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
-        // onBlockAdded is useless for init, as sometimes the TE gets re-instantiated
+	@Override
+	public void onPlace(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
+		// onBlockAdded is useless for init, as sometimes the TE gets re-instantiated
 
-        // however, if a block change occurs that does not change kinetic connections,
-        // we can prevent a major re-propagation here
+		// however, if a block change occurs that does not change kinetic connections,
+		// we can prevent a major re-propagation here
 
-        TileEntity tileEntity = worldIn.getBlockEntity(pos);
-        if (tileEntity instanceof KineticTileEntity) {
-            KineticTileEntity kineticTileEntity = (KineticTileEntity) tileEntity;
-            kineticTileEntity.preventSpeedUpdate = 0;
+		TileEntity tileEntity = worldIn.getBlockEntity(pos);
+		if (tileEntity instanceof KineticTileEntity) {
+			KineticTileEntity kineticTileEntity = (KineticTileEntity) tileEntity;
+			kineticTileEntity.preventSpeedUpdate = 0;
 
-            if (oldState.getBlock() != state.getBlock())
-                return;
-            if (state.hasTileEntity() != oldState.hasTileEntity())
-                return;
-            if (!areStatesKineticallyEquivalent(oldState, state))
-                return;
+			if (oldState.getBlock() != state.getBlock())
+				return;
+			if (state.hasTileEntity() != oldState.hasTileEntity())
+				return;
+			if (!areStatesKineticallyEquivalent(oldState, state))
+				return;
 
-            kineticTileEntity.preventSpeedUpdate = 2;
-        }
-    }
+			kineticTileEntity.preventSpeedUpdate = 2;
+		}
+	}
 
-    @Override
-    public boolean hasShaftTowards(IWorldReader world, BlockPos pos, BlockState state, Direction face) {
-        return false;
-    }
+	@Override
+	public boolean hasShaftTowards(IWorldReader world, BlockPos pos, BlockState state, Direction face) {
+		return false;
+	}
 
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
+	@Override
+	public boolean hasTileEntity(BlockState state) {
+		return true;
+	}
 
-    protected boolean areStatesKineticallyEquivalent(BlockState oldState, BlockState newState) {
-        if (oldState.getBlock() != newState.getBlock())
-            return false;
-        return getRotationAxis(newState) == getRotationAxis(oldState);
-    }
+	protected boolean areStatesKineticallyEquivalent(BlockState oldState, BlockState newState) {
+		if (oldState.getBlock() != newState.getBlock())
+			return false;
+		return getRotationAxis(newState) == getRotationAxis(oldState);
+	}
 
-    @Override
-    public abstract TileEntity createTileEntity(BlockState state, IBlockReader world);
+	@Override
+	public abstract TileEntity createTileEntity(BlockState state, IBlockReader world);
 
-    @Override
-    public void updateIndirectNeighbourShapes(BlockState stateIn, IWorld worldIn, BlockPos pos, int flags, int count) {
-        if (worldIn.isClientSide())
-            return;
+	@Override
+	public void updateIndirectNeighbourShapes(BlockState stateIn, IWorld worldIn, BlockPos pos, int flags, int count) {
+		if (worldIn.isClientSide())
+			return;
 
-        TileEntity tileEntity = worldIn.getBlockEntity(pos);
-        if (!(tileEntity instanceof KineticTileEntity))
-            return;
-        KineticTileEntity kte = (KineticTileEntity) tileEntity;
+		TileEntity tileEntity = worldIn.getBlockEntity(pos);
+		if (!(tileEntity instanceof KineticTileEntity))
+			return;
+		KineticTileEntity kte = (KineticTileEntity) tileEntity;
 
-        if (kte.preventSpeedUpdate > 0) {
-            kte.preventSpeedUpdate--;
-            return;
-        }
+		if (kte.preventSpeedUpdate > 0) {
+			kte.preventSpeedUpdate--;
+			return;
+		}
 
-        // Remove previous information when block is added
-        kte.warnOfMovement();
-        kte.clearKineticInformation();
-        kte.updateSpeed = true;
-    }
+		// Remove previous information when block is added
+		kte.warnOfMovement();
+		kte.clearKineticInformation();
+		kte.updateSpeed = true;
+	}
 
-    @Override
-    public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
-        if (worldIn.isClientSide)
-            return;
+	@Override
+	public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+		if (worldIn.isClientSide)
+			return;
 
-        TileEntity tileEntity = worldIn.getBlockEntity(pos);
-        if (!(tileEntity instanceof KineticTileEntity))
-            return;
+		TileEntity tileEntity = worldIn.getBlockEntity(pos);
+		if (!(tileEntity instanceof KineticTileEntity))
+			return;
 
-        KineticTileEntity kte = (KineticTileEntity) tileEntity;
-        kte.effects.queueRotationIndicators();
-    }
+		KineticTileEntity kte = (KineticTileEntity) tileEntity;
+		kte.effects.queueRotationIndicators();
+	}
 
-    public float getParticleTargetRadius() {
-        return .65f;
-    }
+	public float getParticleTargetRadius() {
+		return .65f;
+	}
 
-    public float getParticleInitialRadius() {
-        return .75f;
-    }
+	public float getParticleInitialRadius() {
+		return .75f;
+	}
 
 }
